@@ -1,59 +1,61 @@
 import 'package:flutter/material.dart';
-import 'package:drivebuy/models/Drive.dart';
+import 'dart:convert';
+import 'package:drivebuy/views/components/ShowDrive.dart';
+import 'package:drivebuy/services/DriveService.dart';
 
-class DriveView extends StatelessWidget {
+class DriveView extends StatefulWidget {
 
-  final driveJson;
+  @override
+  State<StatefulWidget> createState() {
+    return new DriveViewState();
+  }
+}
 
-  DriveView(this.driveJson);
+class DriveViewState extends State<DriveView> {
+
+  var _isLoading = true;
+  var driveJson;
+
+  _fetchData() async {
+
+    final driveService = new DriveService();
+
+    final response = await driveService.getDrive("001");
+
+    if(response.statusCode == 200) {
+
+      final responseBody = json.decode(response.body);
+
+      setState(() {
+        _isLoading = false;
+
+        this.driveJson = responseBody;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final Drive drive = Drive.fromJson(driveJson);
 
-    return new Column(
-      children: <Widget>[
-        new Container(
-            padding: new EdgeInsets.all(16.00),
-            child: new Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  new Container(height: 8.0),
-                  new Text(
-                      drive.pid,
-                      style: new TextStyle(
-                        fontSize: 16.0, fontWeight: FontWeight.bold
-                      )
-                  ),
-                  new Text(
-                      drive.address.firstLine,
-                      style: new TextStyle(
-                          fontSize: 16.0, fontWeight: FontWeight.bold
-                      )
-                  ),
-                  new Text(
-                      drive.address.postcode,
-                      style: new TextStyle(
-                          fontSize: 16.0, fontWeight: FontWeight.bold
-                      )
-                  ),
-                  new Text(
-                      drive.price.toString(),
-                      style: new TextStyle(
-                          fontSize: 16.0, fontWeight: FontWeight.bold
-                      )
-                  ),
-                  new Text(
-                      drive.status,
-                      style: new TextStyle(
-                          fontSize: 16.0, fontWeight: FontWeight.bold
-                      )
-                  ),
-                ]
-            )
+    return new MaterialApp (
+      home: new Scaffold(
+        appBar: AppBar(
+          title: new Text("DriveBuy"),
+          actions: <Widget>[
+            new IconButton(icon: new Icon(Icons.refresh),
+                onPressed: () {
+                  setState(() {
+                    _isLoading = true;
+                  });
+                  _fetchData();
+                })
+          ],
         ),
-        new Divider()
-      ],
+        body: new Center(
+          child: _isLoading ? new CircularProgressIndicator() :
+            new ShowDrive(driveJson)
+        ),
+      )
     );
   }
 }
